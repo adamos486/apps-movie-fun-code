@@ -1,23 +1,19 @@
 package org.superbiz.moviefun.albums;
 
+import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.Map;
+@Controller public class AlbumsController {
 
-@Controller
-public class AlbumsController {
+  private final AlbumsBean albumsBean;
 
-    private final AlbumsBean albumsBean;
+  public AlbumsController(AlbumsBean albumsBean) {
+    this.albumsBean = albumsBean;
+  }
 
-    public AlbumsController(AlbumsBean albumsBean) {
-        this.albumsBean = albumsBean;
-    }
-
-
-    @GetMapping("/albums")
-    public String index(Map<String, Object> model) {
-        model.put("albums", albumsBean.getAlbums());
-        return "albums";
-    }
+  @GetMapping("/albums") public String index(Map<String, Object> model) {
+    model.put("albums", albumsBean.getAlbums());
+    return "albums";
+  }
 }
