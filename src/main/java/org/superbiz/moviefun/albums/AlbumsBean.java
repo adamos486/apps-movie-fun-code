@@ -20,20 +20,24 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaQuery;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository public class AlbumsBean {
 
-  @PersistenceContext private EntityManager entityManager;
+  @PersistenceContext(unitName = "persist-albums")
+  @Autowired
+  @Qualifier("createAlbumsEntityBean")
+  private EntityManager createAlbumsEntityBean;
 
-  @Transactional public void addAlbum(Album album) {
-    entityManager.persist(album);
+  public void addAlbum(Album album) {
+    createAlbumsEntityBean.persist(album);
   }
 
   public List<Album> getAlbums() {
-    CriteriaQuery<Album> cq = entityManager.getCriteriaBuilder().createQuery(Album.class);
+    CriteriaQuery<Album> cq = createAlbumsEntityBean.getCriteriaBuilder().createQuery(Album.class);
     cq.select(cq.from(Album.class));
-    return entityManager.createQuery(cq).getResultList();
+    return createAlbumsEntityBean.createQuery(cq).getResultList();
   }
 }
