@@ -10,7 +10,10 @@ spring:
   mvc.view:
     prefix: /WEB-INF/
     suffix: .jsp
-
+logging.level:
+  root: INFO
+  org.superbiz.moviefun: ERROR
+  org.superbiz.moviefun.movies: DEBUG
 s3:
   accessKey: <access key id>
   secretKey: <secret access key>
