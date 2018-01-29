@@ -14,7 +14,3 @@ logging.level:
   root: INFO
   org.superbiz.moviefun: ERROR
   org.superbiz.moviefun.movies: DEBUG
-s3:
-  accessKey: <access key id>
-  secretKey: <secret access key>
-  bucketName: <name of the bucket>

@@ -13,6 +13,10 @@ import org.superbiz.moviefun.blobstore.S3Store;
 
 @SpringBootApplication
 public class Application {
+    @Value("${s3.accessKey}") String s3AccessKey;
+    @Value("${s3.secretKey}") String s3SecretKey;
+    @Value("${s3.bucketName}") String s3BucketName;
+
 
     public static void main(String... args) {
         SpringApplication.run(Application.class, args);
@@ -22,10 +26,6 @@ public class Application {
     public ServletRegistrationBean actionServletRegistration(ActionServlet actionServlet) {
         return new ServletRegistrationBean(actionServlet, "/moviefun/*");
     }
-
-    @Value("${s3.accessKey}") String s3AccessKey;
-    @Value("${s3.secretKey}") String s3SecretKey;
-    @Value("${s3.bucketName}") String s3BucketName;
 
     @Bean
     public BlobStore blobStore() {
