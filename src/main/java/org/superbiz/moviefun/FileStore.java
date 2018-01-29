@@ -37,6 +37,8 @@ public class FileStore implements BlobStore {
     //TODO: Check for the existence of a file with that name.
     //TODO: Open a file that exists and return that.
     //TODO: Return something else if it doesn't.
+
+
     ClassLoader loader = FileStore.class.getClassLoader();
     Blob blob = new Blob(name, loader.getResourceAsStream(name), ".jpg");
     return Optional.of(blob);

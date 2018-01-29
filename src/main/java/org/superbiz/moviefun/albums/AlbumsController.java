@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.tika.Tika;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,9 +30,11 @@ import static java.nio.file.Files.readAllBytes;
 @Controller @RequestMapping("/albums") public class AlbumsController {
 
   private final AlbumsBean albumsBean;
+  private FileStore fileStore;
 
   public AlbumsController(AlbumsBean albumsBean) {
     this.albumsBean = albumsBean;
+    this.fileStore = new FileStore();
   }
 
   @GetMapping public String index(Map<String, Object> model) {
@@ -46,32 +50,26 @@ import static java.nio.file.Files.readAllBytes;
 
   @PostMapping("/{albumId}/cover") public String uploadCover(@PathVariable long albumId,
       @RequestParam("file") MultipartFile uploadedFile) throws IOException {
-    saveUploadToFile(uploadedFile, getCoverFile(albumId));
-
+//    saveUploadToFile(uploadedFile, getCoverFile(albumId));
+    Blob blob = new Blob(uploadedFile.getName(), uploadedFile.getInputStream(), uploadedFile.getContentType());
+    fileStore.put(blob);
     return format("redirect:/albums/%d", albumId);
   }
 
   @GetMapping("/{albumId}/cover") public HttpEntity<byte[]> getCover(@PathVariable long albumId)
       throws IOException, URISyntaxException {
+    //TODO: Needs replacement
     Path coverFilePath = getExistingCoverPath(albumId);
-    byte[] imageBytes = readAllBytes(coverFilePath);
-    HttpHeaders headers = createImageHttpHeaders(coverFilePath, imageBytes);
 
-    return new HttpEntity<>(imageBytes, headers);
-  }
+    String coverFileName = format("covers/%d", albumId);
+    Optional<Blob> optionalBlob = fileStore.get(coverFileName);
+    byte[] targetArray = new byte[optionalBlob.get().getIs().available()];
+    optionalBlob.get().getIs().read(targetArray);
 
-  private void saveUploadToFile(@RequestParam("file") MultipartFile uploadedFile, File targetFile)
-      throws IOException {
-    //targetFile.delete();
-    //targetFile.getParentFile().mkdirs();
-    //targetFile.createNewFile();
-    //
-    //try (FileOutputStream outputStream = new FileOutputStream(targetFile)) {
-    //  outputStream.write(uploadedFile.getBytes());
-    //}
-    Blob blob = new Blob(uploadedFile.getName(), uploadedFile.getInputStream(), uploadedFile.getContentType());
-    FileStore fs = new FileStore();
-    fs.put(blob);
+//    byte[] imageBytes = readAllBytes(coverFilePath);
+    HttpHeaders headers = createImageHttpHeaders(coverFilePath, targetArray);
+
+    return new HttpEntity<>(targetArray, headers);
   }
 
   private HttpHeaders createImageHttpHeaders(Path coverFilePath, byte[] imageBytes)
@@ -85,11 +83,23 @@ import static java.nio.file.Files.readAllBytes;
   }
 
   private File getCoverFile(@PathVariable long albumId) {
-    String coverFileName = format("covers/%d", albumId);
-    return new File(coverFileName);
+    //TODO: Needs Replacement
+    try {
+      String coverFileName = format("covers/%d", albumId);
+      Optional<Blob> optionalBlob = fileStore.get(coverFileName);
+      File targetFile = new File(optionalBlob.get().getName());
+
+      return targetFile;
+
+    } catch (IOException e) {
+      System.out.println(e.getLocalizedMessage());
+    }
+    return null;
+    //return new File(coverFileName);
   }
 
   private Path getExistingCoverPath(@PathVariable long albumId) throws URISyntaxException {
+    //TODO: Needs replacement
     File coverFile = getCoverFile(albumId);
     Path coverFilePath;
 
