@@ -1,7 +1,6 @@
 package org.superbiz.moviefun.albums;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -12,29 +11,27 @@ import java.util.Optional;
 import org.apache.tika.Tika;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.superbiz.moviefun.Blob;
-import org.superbiz.moviefun.FileStore;
+import org.superbiz.moviefun.BlobStore;
 
 import static java.lang.ClassLoader.getSystemResource;
 import static java.lang.String.format;
-import static java.nio.file.Files.readAllBytes;
 
 @Controller @RequestMapping("/albums") public class AlbumsController {
 
   private final AlbumsBean albumsBean;
-  private FileStore fileStore;
+  private BlobStore blobStore;
 
-  public AlbumsController(AlbumsBean albumsBean) {
+  public AlbumsController(AlbumsBean albumsBean, BlobStore blobStore) {
     this.albumsBean = albumsBean;
-    this.fileStore = new FileStore();
+    if (blobStore != null) {
+      this.blobStore = blobStore;
+    }
   }
 
   @GetMapping public String index(Map<String, Object> model) {
@@ -50,25 +47,30 @@ import static java.nio.file.Files.readAllBytes;
 
   @PostMapping("/{albumId}/cover") public String uploadCover(@PathVariable long albumId,
       @RequestParam("file") MultipartFile uploadedFile) throws IOException {
-//    saveUploadToFile(uploadedFile, getCoverFile(albumId));
-    Blob blob = new Blob(uploadedFile.getName(), uploadedFile.getInputStream(), uploadedFile.getContentType());
-    fileStore.put(blob);
+    String fileName = "covers/" + albumId;
+
+    Blob blob = new Blob(fileName, uploadedFile.getInputStream(), uploadedFile.getContentType());
+    blobStore.put(blob);
     return format("redirect:/albums/%d", albumId);
+  }
+
+  @DeleteMapping
+  public HttpEntity<?> deleteCovers() {
+    blobStore.deleteAll();
+    return new HttpEntity<>(HttpStatus.OK);
   }
 
   @GetMapping("/{albumId}/cover") public HttpEntity<byte[]> getCover(@PathVariable long albumId)
       throws IOException, URISyntaxException {
-    //TODO: Needs replacement
     Path coverFilePath = getExistingCoverPath(albumId);
-
     String coverFileName = format("covers/%d", albumId);
-    Optional<Blob> optionalBlob = fileStore.get(coverFileName);
+    Optional<Blob> optionalBlob = blobStore.get(coverFileName);
+
+
     byte[] targetArray = new byte[optionalBlob.get().getIs().available()];
     optionalBlob.get().getIs().read(targetArray);
 
-//    byte[] imageBytes = readAllBytes(coverFilePath);
     HttpHeaders headers = createImageHttpHeaders(coverFilePath, targetArray);
-
     return new HttpEntity<>(targetArray, headers);
   }
 
@@ -83,10 +85,9 @@ import static java.nio.file.Files.readAllBytes;
   }
 
   private File getCoverFile(@PathVariable long albumId) {
-    //TODO: Needs Replacement
     try {
       String coverFileName = format("covers/%d", albumId);
-      Optional<Blob> optionalBlob = fileStore.get(coverFileName);
+      Optional<Blob> optionalBlob = blobStore.get(coverFileName);
       File targetFile = new File(optionalBlob.get().getName());
 
       return targetFile;
@@ -95,11 +96,9 @@ import static java.nio.file.Files.readAllBytes;
       System.out.println(e.getLocalizedMessage());
     }
     return null;
-    //return new File(coverFileName);
   }
 
   private Path getExistingCoverPath(@PathVariable long albumId) throws URISyntaxException {
-    //TODO: Needs replacement
     File coverFile = getCoverFile(albumId);
     Path coverFilePath;
 

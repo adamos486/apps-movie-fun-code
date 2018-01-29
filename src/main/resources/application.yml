@@ -9,3 +9,10 @@ spring:
   mvc.view:
     prefix: /WEB-INF/
     suffix: .jsp
+
+s3:
+  endpointUrl: http://moviefun-responsive-bongo.apps.pikes.pal.pivotal.io
+  accessKey:
+  secretKey:
+  bucketName: moviefun
+
